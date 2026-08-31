@@ -7,7 +7,7 @@ int HEIGHT = 0;
 int main(int argc, char **argv)
 {
 	if (argc < 3)
-		return (printf("Usage: ./demo <width> <height>\n"));
+		return (printf("Usage: ./demo <width> <height>. MUST BE YOUR SCREEN RESOLUTION\n"));
 	WIDTH  = atoi(argv[1]);
 	HEIGHT = atoi(argv[2]);
 
