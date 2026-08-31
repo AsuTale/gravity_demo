@@ -17,6 +17,29 @@ static bool	create_particule = false;
 static int	mouse_x = 0;
 static int	mouse_y = 0;
 static particule_t	*dust = NULL;
+static bool	paused = false;
+static size_t creation_quantity = 1;
+
+void	on_kb_press(struct mfb_window *win, mfb_key key, mfb_key_mod mod, bool pressed)
+{
+	if (!pressed)
+		return ;
+	switch (key) {
+		case MFB_KB_KEY_SPACE:
+			paused = !paused;
+			break;
+		case MFB_KB_KEY_M:
+			creation_quantity--;
+			break;
+		case MFB_KB_KEY_P:
+			creation_quantity++;
+			break;
+		case MFB_KB_KEY_ESCAPE:
+			mfb_close(win);
+			free(dust);
+			return ;
+	}
+}
 
 void	on_mouse_click(struct mfb_window *win, mfb_mouse_button btn, mfb_key_mod mod, bool pressed)
 {
@@ -32,14 +55,15 @@ void	on_mouse_click(struct mfb_window *win, mfb_mouse_button btn, mfb_key_mod mo
 void	demo_gravity(struct mfb_window *win, uint32_t *buffer, double dt)
 {
 	const uint8_t *keys = mfb_get_key_buffer(win);
-	static bool	paused = false;
 	static int	dust_nb = 0;
 	if (!dust)	dust = calloc(DUST_MAX + 1, sizeof(particule_t));
 	if (!dust)	return ;
 
 	mfb_set_mouse_button_callback(win, on_mouse_click);
+	mfb_set_keyboard_callback(win, on_kb_press);
+	write_unb(buffer, POS(WIDTH - (8 * (creation_quantity / 10)) - 10, 10), creation_quantity, MFB_RGB(255, 255, 255));
 	if (create_particule) {
-		for (int i = 0; i < 5000; i++) {
+		for (int i = 0; i < creation_quantity; i++) {
 			bool test_max_count = false;
 			while(dust[dust_nb].alive) {
 				dust_nb++;
@@ -52,7 +76,8 @@ void	demo_gravity(struct mfb_window *win, uint32_t *buffer, double dt)
 					write_str(buffer, POS(10, 20), "Max particule count!", MFB_RGB(255, 255, 255));
 				}
 			}
-			dust[dust_nb] = (particule_t){2, mouse_x + i % 100, mouse_y + i / 100, \
+			int sqr = sqrt(creation_quantity);
+			dust[dust_nb] = (particule_t){2, mouse_x + i % sqr - sqr / 2, mouse_y + i / sqr - sqr / 2, \
 							mfb_get_mouse_x(win) - mouse_x, mfb_get_mouse_y(win) - mouse_y, true};
 			dust_nb++;
 			dust_nb %= DUST_MAX;
@@ -64,10 +89,6 @@ void	demo_gravity(struct mfb_window *win, uint32_t *buffer, double dt)
 	if (mouse_x && mouse_y)
 		draw_line(buffer, (t_point){{mouse_x, mouse_y}}, \
 				(t_point){{mfb_get_mouse_x(win), mfb_get_mouse_y(win)}}, MFB_RGB(255, 255, 255));
-	if (keys[MFB_KB_KEY_SPACE]) {
-		paused = !paused;
-		usleep(500);
-	}
 	if (paused) {
 		write_str(buffer, POS(10, 10), "Paused!", MFB_RGB(255, 255, 255));
 		for (int i = 0; i < DUST_MAX; i++) {

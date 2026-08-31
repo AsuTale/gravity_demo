@@ -17,6 +17,7 @@ size_t	draw_rect(uint32_t *buff, t_point origin, t_point size, uint32_t color, b
 size_t	draw_circ(uint32_t *buff, t_point o, unsigned r, uint32_t color);
 void	write_char(uint32_t *buffer, size_t pos, char c, uint32_t color);
 void	write_str(uint32_t *buffer, size_t pos, char *str, uint32_t color);
+void	write_unb(uint32_t *buffer, size_t pos, size_t nb, uint32_t color);
 
 #endif
 

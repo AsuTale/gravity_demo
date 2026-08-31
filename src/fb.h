@@ -10,12 +10,12 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define WIDTH  1366
-#define HEIGHT 768
-
 #define X(pix)		((int)(pix) % WIDTH)
 #define Y(pix)		((int)(pix) / WIDTH)
 #define POS(x, y)	((x) + (y) * WIDTH)
+
+extern int WIDTH;
+extern int HEIGHT;
 
 typedef union	{
 	struct {
