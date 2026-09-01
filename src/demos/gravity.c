@@ -61,7 +61,7 @@ void	demo_gravity(struct mfb_window *win, uint32_t *buffer, double dt)
 
 	mfb_set_mouse_button_callback(win, on_mouse_click);
 	mfb_set_keyboard_callback(win, on_kb_press);
-	write_unb(buffer, POS(WIDTH - (8 * (creation_quantity / 10)) - 10, 10), creation_quantity, MFB_RGB(255, 255, 255));
+	write_unb(buffer, POS(WIDTH - 10, 10), creation_quantity, MFB_RGB(255, 255, 255));
 	if (create_particule) {
 		for (int i = 0; i < creation_quantity; i++) {
 			bool test_max_count = false;

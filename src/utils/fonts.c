@@ -29,8 +29,8 @@ void	write_unb(uint32_t *buffer, size_t pos, size_t nb, uint32_t color)
 	for (int i = nb; i; i /= 10)
 		nb_length++;
 
-	for (nb_length; nb_length; nb_length--) {
-		write_char(buffer, POS(X(pos) + nb_length * 8 - 10, Y(pos)), nb % 10 + '0', color);
+	for (int total_length = nb_length; nb_length; nb_length--) {
+		write_char(buffer, POS(X(pos) - total_length * 8 + nb_length * 8, Y(pos)), nb % 10 + '0', color);
 		nb /= 10;
 	}
 }
