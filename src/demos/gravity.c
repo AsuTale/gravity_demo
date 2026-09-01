@@ -52,9 +52,63 @@ void	on_mouse_click(struct mfb_window *win, mfb_mouse_button btn, mfb_key_mod mo
 	}
 }
 
+static inline void	draw_particule(uint32_t *buffer, particule_t p)
+{
+		int speed = fabs(p.dx) + fabs(p.dy);
+		uint32_t color = (speed < 255)? MFB_RGB(255, 255 - speed, 255 - speed) \
+						: MFB_RGB(255 - speed % 255, 0, speed % 255);
+		plot(buffer, POS((int)(p.x), (int)(p.y)), color);
+
+}
+
+void	calculate_collision(particule_t *a, particule_t *b)
+{
+	float	Fax = a->dx * a->mass;
+	float	Fay = a->dy * a->mass;
+	float	Fbx = b->dx * b->mass;
+	float	Fby = b->dy * b->mass;
+	float	m = a->mass + b->mass;
+	a->dx = (Fax + Fbx) / m;
+	a->dy = (Fay + Fby) / m;
+	b->dx = (Fax + Fbx) / m;
+	b->dy = (Fay + Fby) / m;
+	a->x += a->dx / (fabs(a->dx) + fabs(a->dy));
+	a->y += a->dy / (fabs(a->dx) + fabs(a->dy));
+}
+
+void	calculate_particules_movement(uint32_t *buffer)
+{
+	float	acc, ax, ay;
+
+	for (int i = 0; i < DUST_MAX; i++) {
+		if (dust[i].x < 0 || dust[i].y < 0 || dust[i].x > WIDTH || dust[i].y > HEIGHT)
+			dust[i].alive = false;
+		if (!dust[i].alive)
+			continue;
+		acc = 0;
+		ax = 0;
+		ay = 0;
+		for (int j = 0; j < DUST_MAX; j++) {
+			if (i == j || !dust[j].alive)
+				continue;
+			if ((int)dust[i].x == (int)dust[j].x && (int)dust[i].y == (int)dust[j].y) {
+				calculate_collision(&dust[i], &dust[j]);
+			}
+			float	normt = norm(dust[i].x, dust[i].y, dust[j].x, dust[j].y);
+			float	normx = norm(dust[i].x, 0, dust[j].x, 0);
+			float	normy = norm(0, dust[i].y, 0, dust[j].y);
+			acc = G * dust[i].mass * dust[j].mass / (normt * dust[i].mass); // F / Mass
+			ax +=(dust[j].x - dust[i].x > 0)? (normx * acc / normt) : -(normx * acc / normt);
+			ay +=(dust[j].y - dust[i].y > 0)? (normy * acc / normt) : -(normy * acc / normt);
+		}
+		dust[i].dx += ax;
+		dust[i].dy += ay;
+		draw_particule(buffer, dust[i]);
+	}
+}
+
 void	demo_gravity(struct mfb_window *win, uint32_t *buffer, double dt)
 {
-	const uint8_t *keys = mfb_get_key_buffer(win);
 	static int	dust_nb = 0;
 	if (!dust)	dust = calloc(DUST_MAX + 1, sizeof(particule_t));
 	if (!dust)	return ;
@@ -94,50 +148,11 @@ void	demo_gravity(struct mfb_window *win, uint32_t *buffer, double dt)
 		for (int i = 0; i < DUST_MAX; i++) {
 			if (!dust[i].alive)
 				continue;
-			int speed = fabs(dust[i].dx) + fabs(dust[i].dy);
-			uint32_t color = (speed < 255)? MFB_RGB(255, 255 - speed, 255 - speed) \
-							: MFB_RGB(255 - speed % 255, 0, speed % 255);
-			plot(buffer, POS((int)(dust[i].x), (int)(dust[i].y)), color);
+			draw_particule(buffer, dust[i]);
 		}
 	}
 	else {
-		for (int i = 0; i < DUST_MAX; i++) {
-			if (dust[i].x < 0 || dust[i].y < 0 || dust[i].x > WIDTH || dust[i].y > HEIGHT)
-				dust[i].alive = false;
-			if (!dust[i].alive)
-				continue;
-			float	acc = 0;
-			float	ax = 0;
-			float	ay = 0;
-			for (int j = 0; j < DUST_MAX; j++) {
-				if (i == j || !dust[j].alive)
-					continue;
-				if ((int)dust[i].x == (int)dust[j].x && (int)dust[i].y == (int)dust[j].y) {
-					float	tmp1 = dust[i].dx;
-					float	tmp2 = dust[i].dy;
-					dust[i].dx = (tmp1 + dust[j].dx) / 2;
-					dust[i].dy = (tmp2 + dust[j].dy) / 2;
-					dust[j].dx = (tmp1 + dust[j].dx) / 2;
-					dust[j].dy = (tmp2 + dust[j].dy) / 2;
-					dust[i].x += dust[i].dx / (fabs(dust[i].dx) + fabs(dust[i].dy));
-					dust[i].y += dust[i].dy / (fabs(dust[i].dx) + fabs(dust[i].dy));
-				}
-				float	normt = norm(dust[i].x, dust[i].y, dust[j].x, dust[j].y);
-				if (normt > 100)
-					continue;
-				float	normx = norm(dust[i].x, 0, dust[j].x, 0);
-				float	normy = norm(0, dust[i].y, 0, dust[j].y);
-				acc = G * dust[i].mass * dust[j].mass / (normt * dust[i].mass); // F / Mass
-				ax +=(dust[j].x - dust[i].x > 0)? (normx * acc / normt) : -(normx * acc / normt);
-				ay +=(dust[j].y - dust[i].y > 0)? (normy * acc / normt) : -(normy * acc / normt);
-			}
-			dust[i].dx += ax;
-			dust[i].dy += ay;
-			int speed = fabs(dust[i].dx) + fabs(dust[i].dy);
-			uint32_t color = (speed < 255)? MFB_RGB(255, 255 - speed, 255 - speed) \
-							: MFB_RGB(255 - speed % 255, 0, speed % 255);
-			plot(buffer, POS((int)(dust[i].x), (int)(dust[i].y)), color);
-		}
+		calculate_particules_movement(buffer);
 		for	(int i = 0; i < DUST_MAX; i++) {
 			dust[i].x += dust[i].dx * dt;
 			dust[i].y += dust[i].dy * dt;
