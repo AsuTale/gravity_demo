@@ -78,7 +78,8 @@ void	calculate_collision(particule_t *a, particule_t *b)
 
 void	calculate_particules_movement(uint32_t *buffer)
 {
-	float	acc, ax, ay;
+	float	acc;
+	float	normt, normx, normy;
 
 	for (int i = 0; i < DUST_MAX; i++) {
 		if (dust[i].x < 0 || dust[i].y < 0 || dust[i].x > WIDTH || dust[i].y > HEIGHT)
@@ -86,23 +87,21 @@ void	calculate_particules_movement(uint32_t *buffer)
 		if (!dust[i].alive)
 			continue;
 		acc = 0;
-		ax = 0;
-		ay = 0;
-		for (int j = 0; j < DUST_MAX; j++) {
+		for (int j = i + 1; j < DUST_MAX; j++) {
 			if (i == j || !dust[j].alive)
 				continue;
 			if ((int)dust[i].x == (int)dust[j].x && (int)dust[i].y == (int)dust[j].y) {
 				calculate_collision(&dust[i], &dust[j]);
 			}
-			float	normt = norm(dust[i].x, dust[i].y, dust[j].x, dust[j].y);
-			float	normx = norm(dust[i].x, 0, dust[j].x, 0);
-			float	normy = norm(0, dust[i].y, 0, dust[j].y);
-			acc = G * dust[i].mass * dust[j].mass / (normt * dust[i].mass); // F / Mass
-			ax +=(dust[j].x - dust[i].x > 0)? (normx * acc / normt) : -(normx * acc / normt);
-			ay +=(dust[j].y - dust[i].y > 0)? (normy * acc / normt) : -(normy * acc / normt);
+			normt = norm(dust[i].x, dust[i].y, dust[j].x, dust[j].y);
+			normx = norm(dust[i].x, 0, dust[j].x, 0);
+			normy = norm(0, dust[i].y, 0, dust[j].y);
+			acc = G / (normt);
+			dust[i].dx +=(dust[j].x - dust[i].x > 0)? (normx * acc / normt) : -(normx * acc / normt);
+			dust[i].dy +=(dust[j].y - dust[i].y > 0)? (normy * acc / normt) : -(normy * acc / normt);
+			dust[j].dx +=(dust[j].x - dust[i].x > 0)? -(normx * acc / normt) : (normx * acc / normt);
+			dust[j].dy +=(dust[j].y - dust[i].y > 0)? -(normy * acc / normt) : (normy * acc / normt);
 		}
-		dust[i].dx += ax;
-		dust[i].dy += ay;
 		draw_particule(buffer, dust[i]);
 	}
 }
