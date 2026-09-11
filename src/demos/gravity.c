@@ -29,10 +29,16 @@ void	on_kb_press(struct mfb_window *win, mfb_key key, mfb_key_mod mod, bool pres
 			paused = !paused;
 			break;
 		case MFB_KB_KEY_M:
-			creation_quantity--;
+			if (mod == MFB_KB_MOD_SHIFT)
+				creation_quantity -= 10;
+			else
+				creation_quantity--;
 			break;
 		case MFB_KB_KEY_P:
-			creation_quantity++;
+			if (mod == MFB_KB_MOD_SHIFT)
+				creation_quantity += 10;
+			else
+				creation_quantity++;
 			break;
 		case MFB_KB_KEY_ESCAPE:
 			mfb_close(win);

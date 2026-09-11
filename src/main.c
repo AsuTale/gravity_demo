@@ -26,6 +26,7 @@ int main(int argc, char **argv)
 		memset(buffer, 0, WIDTH * HEIGHT * sizeof(uint32_t));
 
 		demo_gravity(win, buffer, dt);
+		write_unb(buffer, POS(10, 10), 60 - dt * 60, MFB_RGB(255, 255, 255));
 
 		if (mfb_update(win, buffer) != MFB_STATE_OK) break;
 	}
